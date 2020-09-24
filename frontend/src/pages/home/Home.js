@@ -10,18 +10,33 @@ export default function Home() {
   const [news, setNews] = useState([])
   const [search, setSearch] = useState(""); 
   const [emptyReturn, setEmptyReturn] = useState("");
+  const [loading, setLoading] = useState(false)
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1);
+
+  async function loadNews(){
+    if(loading) 
+      return;
+    if(total > 0 && news.length == total)
+      return;
+    setLoading(true);
+    const Response = await api.get('/', {params:{ page }});
+
+    setNews([...news, ...Response.data.articles]);
+    setTotal(Response.headers['x-total-count']);
+    setPage(page + 1);
+    setLoading(false);
+  }
 
   useEffect(() => {
-    if(news == '' && search == '') {
-      api.get('/').then(Response => setNews(Response.data.articles));
-      setEmptyReturn("");
-    }
-  }, [news, search]);
+    loadNews();
+  }, []);
+
 
   async function handleSearch(e) {
     e.preventDefault();
     try {
-      await api.get(`search?country=br&category=${search}`)
+      await api.get(`search?country=br&pagesize=5&page=${page}&category=${search}`, )
         .then(Response => {
           {setNews(Response.data.articles)}
           {
